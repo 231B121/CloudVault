@@ -1,9 +1,14 @@
 # CloudVault ☁️
-> Production-grade personal cloud file storage web application built with modern **ASP.NET Core (.NET 10)**, **Amazon S3**, **Microsoft SQL Server**, and a modern responsive **HTML5/JS** frontend.
+> Production-grade cloud file storage web application built with modern **ASP.NET Core (.NET 10)**, **Amazon S3 / Local Storage**, **AWS RDS PostgreSQL**, and a modern responsive **HTML5/JS** frontend.
 
-[![.NET Build](https://img.shields.io/badge/.NET-10.0-blue.svg)](https://dotnet.microsoft.com/)
-[![AWS S3](https://img.shields.io/badge/Storage-Amazon%20S3-orange.svg)](https://aws.amazon.com/s3/)
-[![Database](https://img.shields.io/badge/Database-SQL%20Server-red.svg)](https://www.microsoft.com/sql-server)
+🌐 **Live Demo:** [https://cloudvault-zgxp.onrender.com](https://cloudvault-zgxp.onrender.com/)  
+📚 **Swagger API Docs:** [https://cloudvault-zgxp.onrender.com/swagger](https://cloudvault-zgxp.onrender.com/swagger)  
+🟢 **Live Health Check:** [https://cloudvault-zgxp.onrender.com/health](https://cloudvault-zgxp.onrender.com/health)
+
+[![Live on Render](https://img.shields.io/badge/Render-Live%20Demo-brightgreen?logo=render)](https://cloudvault-zgxp.onrender.com)
+[![AWS RDS](https://img.shields.io/badge/Database-AWS%20RDS%20PostgreSQL-336791?logo=postgresql)](https://aws.amazon.com/rds/)
+[![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
@@ -47,10 +52,11 @@ Every user receives a configurable storage quota (default: 1 GB). Uploads are ve
 ## 🛠️ Technology Stack
 - **Backend Framework**: ASP.NET Core Web API (.NET 10)
 - **Language**: C#
-- **Database**: Microsoft SQL Server with Entity Framework Core 10
-- **Object Storage**: Amazon Web Services S3 SDK (`AWSSDK.S3`)
+- **Database**: AWS RDS PostgreSQL 18.3 (Production) / Microsoft SQL Server / In-Memory (EF Core 10)
+- **Object Storage**: Amazon Web Services S3 SDK (`AWSSDK.S3`) & Local File Storage Provider
 - **Authentication**: ASP.NET Core Identity + JWT Bearer + Refresh Token Rotation
 - **Documentation**: Swagger / OpenAPI with JWT Authorization support
+- **Cloud Hosting**: Render (Web Service Docker Container) + AWS RDS PostgreSQL (Database)
 - **Testing**: xUnit, Moq, FluentAssertions, `WebApplicationFactory<Program>`
 - **Frontend**: HTML5, CSS3, JavaScript (Fetch API), Bootstrap 5
 
