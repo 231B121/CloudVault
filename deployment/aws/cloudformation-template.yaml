@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudVault - Production Infrastructure: S3, RDS SQL Server, ECS Fargate, ALB, CloudWatch'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: 'production'
+    Description: 'Environment name tag'
+  
+  DBMasterUsername:
+    Type: String
+    Default: 'cloudvault_admin'
+    Description: 'Master database username'
+
+  DBMasterPassword:
+    Type: String
+    NoEcho: true
+    Description: 'Master database password (min 8 characters, complex)'
+
+Resources:
+  # ----------------------------------------------------------------------------
+  # 1. Private S3 Storage Bucket
+  # ----------------------------------------------------------------------------
+  StorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'cloudvault-${AWS::AccountId}-${EnvironmentName}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: CleanIncompleteMultipartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+
+  # ----------------------------------------------------------------------------
+  # 2. CloudWatch Log Group
+  # ----------------------------------------------------------------------------
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/cloudvault/${EnvironmentName}/api'
+      RetentionInDays: 30
+
+  # ----------------------------------------------------------------------------
+  # 3. IAM Role for ECS Application Task
+  # ----------------------------------------------------------------------------
+  EcsTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'cloudvault-task-role-${EnvironmentName}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      Policies:
+        - PolicyName: S3AndCloudWatchAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                Resource: !GetAtt StorageBucket.Arn
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:DeleteObject
+                Resource: !Sub '${StorageBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt ApiLogGroup.Arn
+
+  # ----------------------------------------------------------------------------
+  # 4. Amazon RDS SQL Server (Standard / Express)
+  # ----------------------------------------------------------------------------
+  DatabaseInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub 'cloudvault-db-${EnvironmentName}'
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.small
+      Engine: sqlserver-ex
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      PubliclyAccessible: false
+      StorageType: gp3
+      MultiAZ: false
+      AutoMinorVersionUpgrade: true
+      BackupRetentionPeriod: 7
+
+Outputs:
+  S3BucketName:
+    Description: 'S3 Bucket name for file storage'
+    Value: !Ref StorageBucket
+
+  DBEndpoint:
+    Description: 'RDS SQL Server Endpoint'
+    Value: !GetAtt DatabaseInstance.Endpoint.Address
+
+  TaskRoleArn:
+    Description: 'IAM Task Role ARN for ECS'
+    Value: !GetAtt EcsTaskRole.Arn
