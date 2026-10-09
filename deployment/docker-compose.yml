@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cloudvault-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Passw0rd
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: cloudvault-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - localstack_data:/var/lib/localstack
+
+  cloudvault-api:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    container_name: cloudvault-app
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=CloudVaultDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true;
+      - Database__UseInMemoryDatabase=false
+      - Jwt__Secret=CloudVault_Super_Secret_Jwt_Security_Key_With_High_Entropy_2026_Required!
+      - Jwt__Issuer=CloudVault
+      - Jwt__Audience=CloudVaultUsers
+      - Storage__Provider=S3
+      - Storage__S3BucketName=cloudvault-storage
+      - AWS__Region=us-east-1
+      - AWS__ServiceUrl=http://localstack:4566
+      - AWS__ForcePathStyle=true
+      - AWS__AccessKey=test
+      - AWS__SecretKey=test
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+
+volumes:
+  sqlserver_data:
+  localstack_data:
