@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile - CloudVault</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container-fluid max-w-7xl">
+      <a class="brand-logo" href="/dashboard.html">
+        <div class="brand-icon">☁️</div>
+        <span>CloudVault</span>
+      </a>
+
+      <div class="collapse navbar-collapse show" id="navContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+          <li class="nav-item"><a class="nav-link" href="/dashboard.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="/files.html">My Files</a></li>
+          <li class="nav-item"><a class="nav-link active fw-semibold text-primary" href="/profile.html">Profile</a></li>
+          <li class="nav-item"><a class="nav-link" href="/settings.html">Settings</a></li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-3">
+          <span id="nav-user-name" class="small fw-semibold text-secondary"></span>
+          <img id="nav-avatar" src="https://ui-avatars.com/api/?name=User&background=4f46e5&color=fff" class="avatar-sm" alt="Avatar">
+          <button id="logout-btn" class="btn btn-outline-danger btn-sm">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-container" style="max-width: 900px;">
+    <h3 class="fw-bold mb-1">Account &amp; Profile</h3>
+    <p class="text-muted small mb-4">Manage your personal information, profile photo, and password security</p>
+
+    <div class="row g-4">
+      <!-- Profile Picture Card -->
+      <div class="col-md-4">
+        <div class="cv-card text-center">
+          <div class="position-relative d-inline-block mb-3">
+            <img id="profile-picture-preview" src="https://ui-avatars.com/api/?name=User&background=4f46e5&color=fff" class="avatar-lg" alt="Profile Picture">
+          </div>
+          <h5 id="profile-full-name-display" class="fw-bold mb-1">User</h5>
+          <p id="profile-email-display" class="text-muted small mb-3">user@example.com</p>
+
+          <input type="file" id="photo-file-input" accept="image/*" class="d-none">
+          <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="document.getElementById('photo-file-input').click()">
+            Upload New Photo
+          </button>
+          <div class="text-muted small mt-2" style="font-size: 0.75rem;">JPG, PNG, GIF or WEBP up to 5MB</div>
+        </div>
+
+        <!-- Storage Quota Summary -->
+        <div class="cv-card">
+          <h6 class="fw-bold small text-uppercase text-muted mb-2">Storage Status</h6>
+          <div class="storage-bar-wrapper mb-2">
+            <div id="profile-storage-bar" class="storage-bar-fill" style="width: 0%;"></div>
+          </div>
+          <div class="small text-muted d-flex justify-content-between">
+            <span id="profile-storage-used">0 B</span>
+            <span id="profile-storage-limit">1 GB</span>
+          </div>
+          <div id="profile-storage-pct" class="text-center small fw-semibold text-primary mt-2">0% Used</div>
+        </div>
+      </div>
+
+      <!-- Settings Forms -->
+      <div class="col-md-8">
+        <!-- Edit Profile Details -->
+        <div class="cv-card mb-4">
+          <h6 class="fw-bold mb-3">Personal Information</h6>
+          <form id="edit-profile-form">
+            <div class="mb-3">
+              <label for="profile-name-input" class="form-label small fw-semibold">Full Name</label>
+              <input type="text" id="profile-name-input" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Email Address</label>
+              <input type="email" id="profile-email-input" class="form-control" disabled>
+              <span class="text-muted small" style="font-size: 0.75rem;">Email address cannot be changed directly.</span>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm px-3">Save Profile</button>
+          </form>
+        </div>
+
+        <!-- Change Password -->
+        <div class="cv-card">
+          <h6 class="fw-bold mb-3">Change Password</h6>
+          <div id="password-alert" class="alert alert-danger d-none small py-2 mb-3"></div>
+
+          <form id="change-password-form">
+            <div class="mb-3">
+              <label for="current-password-input" class="form-label small fw-semibold">Current Password</label>
+              <input type="password" id="current-password-input" class="form-control" required autocomplete="current-password">
+            </div>
+            <div class="mb-3">
+              <label for="new-password-input" class="form-label small fw-semibold">New Password (min 8 characters)</label>
+              <input type="password" id="new-password-input" class="form-control" required minlength="8" autocomplete="new-password">
+            </div>
+            <div class="mb-3">
+              <label for="confirm-new-password-input" class="form-label small fw-semibold">Confirm New Password</label>
+              <input type="password" id="confirm-new-password-input" class="form-control" required minlength="8" autocomplete="new-password">
+            </div>
+            <button type="submit" id="btn-change-password" class="btn btn-primary btn-sm px-3">Update Password</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-auto py-3 bg-white border-top text-center text-muted small">
+    <div class="container">&copy; 2026 CloudVault. Enterprise S3 Storage.</div>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    if (!api.isAuthenticated()) {
+      window.location.href = '/login.html';
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', () => api.logout());
+
+    async function loadProfile() {
+      try {
+        const profile = await api.getProfile();
+        document.getElementById('profile-full-name-display').textContent = profile.fullName;
+        document.getElementById('profile-email-display').textContent = profile.email;
+        document.getElementById('profile-name-input').value = profile.fullName;
+        document.getElementById('profile-email-input').value = profile.email;
+        document.getElementById('nav-user-name').textContent = profile.fullName;
+
+        if (profile.profilePictureUrl) {
+          const photoUrl = `${api.getProfilePhotoUrl()}&t=${Date.now()}`;
+          document.getElementById('profile-picture-preview').src = photoUrl;
+          document.getElementById('nav-avatar').src = photoUrl;
+        }
+
+        const usage = await api.getStorageUsage();
+        document.getElementById('profile-storage-bar').style.width = `${Math.min(100, usage.usagePercentage)}%`;
+        document.getElementById('profile-storage-used').textContent = usage.formattedUsed;
+        document.getElementById('profile-storage-limit').textContent = usage.formattedLimit;
+        document.getElementById('profile-storage-pct').textContent = `${usage.usagePercentage}% Used`;
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Photo Upload
+    document.getElementById('photo-file-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      try {
+        showToast('Uploading photo to Amazon S3...', 'info');
+        const res = await api.uploadProfilePhoto(file);
+        showToast('Profile photo updated successfully', 'success');
+        loadProfile();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    // Save Name
+    document.getElementById('edit-profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fullName = document.getElementById('profile-name-input').value.trim();
+      try {
+        await api.updateProfile(fullName);
+        showToast('Profile details updated', 'success');
+        loadProfile();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    // Change Password
+    document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPassword = document.getElementById('current-password-input').value;
+      const newPassword = document.getElementById('new-password-input').value;
+      const confirmNewPassword = document.getElementById('confirm-new-password-input').value;
+      const alertBox = document.getElementById('password-alert');
+
+      alertBox.classList.add('d-none');
+
+      if (newPassword !== confirmNewPassword) {
+        alertBox.textContent = 'New passwords do not match.';
+        alertBox.classList.remove('d-none');
+        return;
+      }
+
+      try {
+        await api.changePassword(currentPassword, newPassword, confirmNewPassword);
+        showToast('Password changed successfully!', 'success');
+        document.getElementById('change-password-form').reset();
+      } catch (err) {
+        alertBox.textContent = err.message || 'Password update failed';
+        alertBox.classList.remove('d-none');
+      }
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>
