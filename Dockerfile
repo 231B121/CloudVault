@@ -22,8 +22,7 @@ RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 # Runtime Image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-EXPOSE 8080
-ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080 10000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Create app_data folder for local file caching
