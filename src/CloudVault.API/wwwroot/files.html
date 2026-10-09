@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Files - CloudVault</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container-fluid max-w-7xl">
+      <a class="brand-logo" href="/dashboard.html">
+        <div class="brand-icon">☁️</div>
+        <span>CloudVault</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+          <li class="nav-item"><a class="nav-link" href="/dashboard.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link active fw-semibold text-primary" href="/files.html">My Files</a></li>
+          <li class="nav-item"><a class="nav-link" href="/profile.html">Profile</a></li>
+          <li class="nav-item"><a class="nav-link" href="/settings.html">Settings</a></li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-3">
+          <span id="nav-user-name" class="small fw-semibold text-secondary"></span>
+          <a href="/profile.html">
+            <img id="nav-avatar" src="https://ui-avatars.com/api/?name=User&background=4f46e5&color=fff" class="avatar-sm" alt="Avatar">
+          </a>
+          <button id="logout-btn" class="btn btn-outline-danger btn-sm">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Breadcrumb & Top Bar -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+      <nav aria-label="breadcrumb">
+        <ol id="breadcrumbs-list" class="breadcrumb mb-0 py-1">
+          <li class="breadcrumb-item"><a href="#" onclick="navigateToFolder(null)">Root</a></li>
+        </ol>
+      </nav>
+
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-secondary btn-sm" id="btn-toggle-view" onclick="toggleView()">🔲 Grid View</button>
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newFolderModal">➕ New Folder</button>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadModal">⬆️ Upload Files</button>
+      </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="cv-card py-3 px-3 mb-3">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-5">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white">🔍</span>
+            <input type="text" id="search-input" class="form-control" placeholder="Search files by name...">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select id="type-filter" class="form-select form-select-sm">
+            <option value="">All File Types</option>
+            <option value="document">Documents (PDF, Word)</option>
+            <option value="image">Images (PNG, JPG, etc)</option>
+            <option value="spreadsheet">Spreadsheets (Excel)</option>
+            <option value="presentation">Presentations (PPT)</option>
+            <option value="archive">Archives (ZIP)</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select id="sort-select" class="form-select form-select-sm">
+            <option value="CreatedAt_desc">Newest First</option>
+            <option value="CreatedAt_asc">Oldest First</option>
+            <option value="FileName_asc">Name (A-Z)</option>
+            <option value="FileName_desc">Name (Z-A)</option>
+            <option value="FileSize_desc">Largest First</option>
+            <option value="FileSize_asc">Smallest First</option>
+          </select>
+        </div>
+        <div class="col-md-2 text-md-end text-muted small" id="quota-indicator">
+          Loading quota...
+        </div>
+      </div>
+    </div>
+
+    <!-- Folders Section -->
+    <div id="folders-section" class="mb-4">
+      <h6 class="fw-bold mb-2 text-muted small text-uppercase">Folders</h6>
+      <div id="folders-grid" class="row g-2">
+        <div class="col-12 text-muted small">Loading folders...</div>
+      </div>
+    </div>
+
+    <!-- Files Section -->
+    <div>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold mb-0 text-muted small text-uppercase">Files</h6>
+        <span id="files-count-badge" class="badge bg-secondary-subtle text-secondary small">0 items</span>
+      </div>
+
+      <!-- Grid View Container -->
+      <div id="files-grid-view" class="file-grid">
+        <div class="text-muted small py-4">Loading files...</div>
+      </div>
+
+      <!-- List View Container (Table) -->
+      <div id="files-list-view" class="cv-card p-0 d-none">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small">
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Size</th>
+                <th scope="col">Uploaded</th>
+                <th scope="col" class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="files-table-body">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <nav id="pagination-nav" class="d-flex justify-content-between align-items-center mt-3 d-none">
+        <span id="pagination-info" class="small text-muted"></span>
+        <ul id="pagination-list" class="pagination pagination-sm mb-0"></ul>
+      </nav>
+    </div>
+  </div>
+
+  <!-- New Folder Modal -->
+  <div class="modal fade" id="newFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Create New Folder</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="new-folder-form">
+          <div class="modal-body">
+            <label for="folder-name-input" class="form-label small fw-semibold">Folder Name</label>
+            <input type="text" id="folder-name-input" class="form-control" required placeholder="e.g. Invoices 2026">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm">Create Folder</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Modal -->
+  <div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Upload Files</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="upload-dropzone" class="dropzone mb-3">
+            <div class="fs-1 mb-2">☁️</div>
+            <div class="fw-bold">Drag and drop files here to upload</div>
+            <div class="text-muted small mb-2">Supported: PDF, Word, Excel, PowerPoint, TXT, Images, ZIP (max 100MB per file)</div>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('multi-file-input').click()">Browse Files</button>
+            <input type="file" id="multi-file-input" multiple class="d-none">
+          </div>
+
+          <div id="upload-queue" class="d-none">
+            <h6 class="fw-semibold small mb-2">Selected Files:</h6>
+            <div id="queue-items" class="list-group list-group-flush border rounded mb-3 small" style="max-height: 200px; overflow-y: auto;"></div>
+            <button type="button" id="start-upload-btn" class="btn btn-primary btn-sm w-100">Upload All</button>
+          </div>
+
+          <div id="upload-progress-container" class="mt-3 d-none">
+            <div class="progress mb-2" style="height: 10px;">
+              <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+            </div>
+            <div id="upload-progress-label" class="small text-muted text-center">Uploading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rename Modal -->
+  <div class="modal fade" id="renameModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Rename</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="rename-form">
+          <div class="modal-body">
+            <input type="hidden" id="rename-item-id">
+            <input type="hidden" id="rename-item-type"> <!-- 'file' or 'folder' -->
+            <label for="rename-input" class="form-label small fw-semibold">New Name</label>
+            <input type="text" id="rename-input" class="form-control" required>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Move File Modal -->
+  <div class="modal fade" id="moveModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Move File</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="move-form">
+          <div class="modal-body">
+            <input type="hidden" id="move-file-id">
+            <label for="move-folder-select" class="form-label small fw-semibold">Select Destination Folder</label>
+            <select id="move-folder-select" class="form-select">
+              <option value="">Root (No Folder)</option>
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm">Move File</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-auto py-3 bg-white border-top text-center text-muted small">
+    <div class="container">&copy; 2026 CloudVault. Enterprise S3 Storage.</div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!api.isAuthenticated()) {
+      window.location.href = '/login.html';
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', () => api.logout());
+
+    let currentFolderId = null;
+    let isGridView = true;
+    let currentPage = 1;
+    let selectedFilesQueue = [];
+
+    // Check URL query parameters for folderId
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('folderId')) {
+      currentFolderId = urlParams.get('folderId');
+    }
+
+    async function initFileManager() {
+      try {
+        const user = await api.getMe();
+        document.getElementById('nav-user-name').textContent = user.fullName;
+        if (user.profilePictureUrl) {
+          document.getElementById('nav-avatar').src = `${api.getProfilePhotoUrl()}&t=${Date.now()}`;
+        }
+        await updateQuotaIndicator();
+        await loadFolderContent();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function updateQuotaIndicator() {
+      try {
+        const usage = await api.getStorageUsage();
+        document.getElementById('quota-indicator').textContent = `${usage.formattedUsed} / ${usage.formattedLimit} (${usage.usagePercentage}%)`;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadFolderContent() {
+      await Promise.all([loadFolders(), loadFiles()]);
+      updateBreadcrumbs();
+    }
+
+    async function loadFolders() {
+      const container = document.getElementById('folders-grid');
+      try {
+        const folders = await api.getFolders(currentFolderId);
+        if (folders.length === 0) {
+          container.innerHTML = '<div class="col-12 text-muted small py-1">No subfolders.</div>';
+          return;
+        }
+
+        container.innerHTML = folders.map(f => `
+          <div class="col-md-3 col-sm-6">
+            <div class="folder-item-card d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-2 text-truncate" onclick="navigateToFolder('${f.id}')" style="cursor: pointer;">
+                <span class="fs-4">📁</span>
+                <div class="text-truncate">
+                  <div class="fw-semibold small text-truncate">${f.name}</div>
+                  <div class="text-muted" style="font-size: 0.7rem;">${f.fileCount} files</div>
+                </div>
+              </div>
+              <div class="dropdown">
+                <button class="btn btn-link btn-sm text-muted p-0" data-bs-toggle="dropdown">&vellip;</button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm small">
+                  <li><a class="dropdown-item" href="#" onclick="openRenameModal('folder', '${f.id}', '${f.name}')">Rename</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#" onclick="deleteFolder('${f.id}')">Delete</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<div class="col-12 text-danger small">${err.message}</div>`;
+      }
+    }
+
+    async function loadFiles() {
+      const gridContainer = document.getElementById('files-grid-view');
+      const tableBody = document.getElementById('files-table-body');
+      const search = document.getElementById('search-input').value.trim();
+      const fileType = document.getElementById('type-filter').value;
+      const sortVal = document.getElementById('sort-select').value.split('_');
+
+      try {
+        const result = await api.getFiles({
+          folderId: currentFolderId,
+          search: search,
+          fileType: fileType,
+          page: currentPage,
+          pageSize: 24,
+          sortBy: sortVal[0],
+          sortDescending: sortVal[1] === 'desc'
+        });
+
+        document.getElementById('files-count-badge').textContent = `${result.totalCount} items`;
+
+        if (result.items.length === 0) {
+          const emptyHtml = '<div class="col-12 text-center text-muted py-5">No files found. Drag & drop files or click "Upload Files" above!</div>';
+          gridContainer.innerHTML = emptyHtml;
+          tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No files found.</td></tr>';
+          document.getElementById('pagination-nav').classList.add('d-none');
+          return;
+        }
+
+        // Render Grid
+        gridContainer.innerHTML = result.items.map(f => {
+          const safeName = (f.fileName || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          return `
+          <div class="file-item-card">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="badge bg-light text-secondary border" style="font-size: 0.65rem;">${f.extension.toUpperCase().replace('.', '')}</span>
+              <div class="dropdown">
+                <button class="btn btn-link btn-sm text-muted p-0" data-bs-toggle="dropdown">&vellip;</button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm small">
+                  <li><a class="dropdown-item" href="#" onclick="openFile('${f.id}')">👁️ Open / View</a></li>
+                  <li><a class="dropdown-item" href="#" onclick="downloadFile('${f.id}', '${safeName}')">⬇️ Download</a></li>
+                  <li><a class="dropdown-item" href="#" onclick="openRenameModal('file', '${f.id}', '${safeName}')">✏️ Rename</a></li>
+                  <li><a class="dropdown-item" href="#" onclick="openMoveModal('${f.id}')">📁 Move to...</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#" onclick="deleteFile('${f.id}')">🗑️ Delete</a></li>
+                </ul>
+              </div>
+            </div>
+            <div class="file-item-icon" onclick="openFile('${f.id}')" style="cursor: pointer;" title="Click to view file">
+              ${f.isImage ? `<img src="${api.getFileViewUrl(f.id)}" style="max-height: 70px; max-width: 100%; border-radius: 4px;" alt="preview" onerror="this.outerHTML='${getFileIcon(f.fileName)}'">` : getFileIcon(f.fileName)}
+            </div>
+            <div class="file-item-name" title="${f.fileName}" onclick="openFile('${f.id}')" style="cursor: pointer;">${f.fileName}</div>
+            <div class="d-flex justify-content-between file-item-meta">
+              <span>${f.formattedSize}</span>
+              <span>${new Date(f.createdAt).toLocaleDateString()}</span>
+            </div>
+          </div>
+        `;
+        }).join('');
+
+        // Render List
+        tableBody.innerHTML = result.items.map(f => {
+          const safeName = (f.fileName || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          return `
+          <tr>
+            <td>
+              <span class="me-2" style="cursor: pointer;" onclick="openFile('${f.id}')">${getFileIcon(f.fileName)}</span>
+              <span class="fw-semibold text-dark" style="cursor: pointer;" onclick="openFile('${f.id}')" title="Click to view file">${f.fileName}</span>
+            </td>
+            <td class="text-muted small">${f.contentType}</td>
+            <td class="text-muted small">${f.formattedSize}</td>
+            <td class="text-muted small">${formatDate(f.createdAt)}</td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" onclick="openFile('${f.id}')" title="Open in browser">View</button>
+                <button class="btn btn-outline-primary" onclick="downloadFile('${f.id}', '${safeName}')" title="Download to device">Download</button>
+                <button class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"></button>
+                <ul class="dropdown-menu dropdown-menu-end small">
+                  <li><a class="dropdown-item" href="#" onclick="openRenameModal('file', '${f.id}', '${safeName}')">✏️ Rename</a></li>
+                  <li><a class="dropdown-item" href="#" onclick="openMoveModal('${f.id}')">📁 Move to...</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#" onclick="deleteFile('${f.id}')">🗑️ Delete</a></li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+        `;
+        }).join('');
+
+        renderPagination(result);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function renderPagination(pagedResult) {
+      const nav = document.getElementById('pagination-nav');
+      if (pagedResult.totalPages <= 1) {
+        nav.classList.add('d-none');
+        return;
+      }
+      nav.classList.remove('d-none');
+      document.getElementById('pagination-info').textContent = `Page ${pagedResult.page} of ${pagedResult.totalPages} (${pagedResult.totalCount} total)`;
+
+      const list = document.getElementById('pagination-list');
+      list.innerHTML = `
+        <li class="page-item ${!pagedResult.hasPreviousPage ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${pagedResult.page - 1})">Previous</a>
+        </li>
+        <li class="page-item active"><a class="page-link" href="#">${pagedResult.page}</a></li>
+        <li class="page-item ${!pagedResult.hasNextPage ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="changePage(${pagedResult.page + 1})">Next</a>
+        </li>
+      `;
+    }
+
+    function changePage(page) {
+      currentPage = page;
+      loadFiles();
+    }
+
+    async function updateBreadcrumbs() {
+      const list = document.getElementById('breadcrumbs-list');
+      if (!currentFolderId) {
+        list.innerHTML = '<li class="breadcrumb-item active fw-bold">Root</li>';
+        return;
+      }
+
+      try {
+        const folder = await api.getFolderById(currentFolderId);
+        let html = '<li class="breadcrumb-item"><a href="#" onclick="navigateToFolder(null)">Root</a></li>';
+        folder.breadcrumbs.forEach((b, idx) => {
+          if (idx === folder.breadcrumbs.length - 1) {
+            html += `<li class="breadcrumb-item active fw-bold">${b.name}</li>`;
+          } else {
+            html += `<li class="breadcrumb-item"><a href="#" onclick="navigateToFolder('${b.id}')">${b.name}</a></li>`;
+          }
+        });
+        list.innerHTML = html;
+      } catch (e) {
+        list.innerHTML = '<li class="breadcrumb-item"><a href="#" onclick="navigateToFolder(null)">Root</a></li>';
+      }
+    }
+
+    function navigateToFolder(folderId) {
+      currentFolderId = folderId;
+      currentPage = 1;
+      const newUrl = folderId ? `/files.html?folderId=${folderId}` : '/files.html';
+      window.history.pushState({}, '', newUrl);
+      loadFolderContent();
+    }
+
+    function toggleView() {
+      isGridView = !isGridView;
+      const btn = document.getElementById('btn-toggle-view');
+      const grid = document.getElementById('files-grid-view');
+      const list = document.getElementById('files-list-view');
+
+      if (isGridView) {
+        btn.textContent = '🔲 Grid View';
+        grid.classList.remove('d-none');
+        list.classList.add('d-none');
+      } else {
+        btn.textContent = '📄 List View';
+        grid.classList.add('d-none');
+        list.classList.remove('d-none');
+      }
+    }
+
+    async function downloadFile(id, fileName) {
+      try {
+        showToast('Preparing download...', 'info');
+        await api.downloadFile(id, fileName);
+        showToast('Download started!', 'success');
+      } catch (err) {
+        showToast(err.message || 'Download failed', 'error');
+      }
+    }
+
+    function openFile(id) {
+      try {
+        api.openFile(id);
+      } catch (err) {
+        showToast(err.message || 'Cannot open file', 'error');
+      }
+    }
+
+    async function deleteFile(id) {
+      if (!confirm('Are you sure you want to delete this file? This will permanently release storage quota.')) return;
+      try {
+        await api.deleteFile(id);
+        showToast('File deleted successfully', 'success');
+        updateQuotaIndicator();
+        loadFiles();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function deleteFolder(id) {
+      if (!confirm('Are you sure you want to delete this folder and all contents inside it?')) return;
+      try {
+        await api.deleteFolder(id);
+        showToast('Folder deleted successfully', 'success');
+        updateQuotaIndicator();
+        loadFolders();
+        loadFiles();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Modal Operations (Rename & Move)
+    function openRenameModal(type, id, currentName) {
+      document.getElementById('rename-item-type').value = type;
+      document.getElementById('rename-item-id').value = id;
+      document.getElementById('rename-input').value = currentName;
+      new bootstrap.Modal(document.getElementById('renameModal')).show();
+    }
+
+    document.getElementById('rename-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const type = document.getElementById('rename-item-type').value;
+      const id = document.getElementById('rename-item-id').value;
+      const newName = document.getElementById('rename-input').value.trim();
+
+      try {
+        if (type === 'file') {
+          await api.renameFile(id, newName);
+          showToast('File renamed', 'success');
+          loadFiles();
+        } else {
+          await api.renameFolder(id, newName);
+          showToast('Folder renamed', 'success');
+          loadFolders();
+        }
+        bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    async function openMoveModal(fileId) {
+      document.getElementById('move-file-id').value = fileId;
+      const select = document.getElementById('move-folder-select');
+      select.innerHTML = '<option value="">Root (No Folder)</option>';
+
+      try {
+        const folders = await api.getFolders();
+        folders.forEach(f => {
+          if (f.id !== currentFolderId) {
+            select.innerHTML += `<option value="${f.id}">${f.name}</option>`;
+          }
+        });
+        new bootstrap.Modal(document.getElementById('moveModal')).show();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    document.getElementById('move-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fileId = document.getElementById('move-file-id').value;
+      const targetFolderId = document.getElementById('move-folder-select').value || null;
+
+      try {
+        await api.moveFile(fileId, targetFolderId);
+        showToast('File moved successfully', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('moveModal')).hide();
+        loadFiles();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    // Create Folder Form
+    document.getElementById('new-folder-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('folder-name-input').value.trim();
+      try {
+        await api.createFolder(name, currentFolderId);
+        showToast('Folder created', 'success');
+        document.getElementById('folder-name-input').value = '';
+        bootstrap.Modal.getInstance(document.getElementById('newFolderModal')).hide();
+        loadFolders();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    // Upload & Multi-file Handling
+    const uploadDropzone = document.getElementById('upload-dropzone');
+    const multiFileInput = document.getElementById('multi-file-input');
+    const queueContainer = document.getElementById('upload-queue');
+    const queueItems = document.getElementById('queue-items');
+    const startUploadBtn = document.getElementById('start-upload-btn');
+
+    uploadDropzone.addEventListener('dragover', (e) => { e.preventDefault(); uploadDropzone.classList.add('dragover'); });
+    uploadDropzone.addEventListener('dragleave', () => uploadDropzone.classList.remove('dragover'));
+    uploadDropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadDropzone.classList.remove('dragover');
+      addFilesToQueue(Array.from(e.dataTransfer.files));
+    });
+
+    multiFileInput.addEventListener('change', () => {
+      addFilesToQueue(Array.from(multiFileInput.files));
+    });
+
+    function addFilesToQueue(files) {
+      if (!files.length) return;
+      selectedFilesQueue = files;
+      queueItems.innerHTML = files.map((f, i) => `
+        <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+          <span>${getFileIcon(f.name)} ${f.name}</span>
+          <span class="text-muted small">${formatBytes(f.size)}</span>
+        </div>
+      `).join('');
+      queueContainer.classList.remove('d-none');
+    }
+
+    startUploadBtn.addEventListener('click', async () => {
+      if (!selectedFilesQueue.length) return;
+
+      const progressContainer = document.getElementById('upload-progress-container');
+      const progressBar = document.getElementById('upload-progress-bar');
+      const progressLabel = document.getElementById('upload-progress-label');
+
+      progressContainer.classList.remove('d-none');
+      startUploadBtn.disabled = true;
+
+      try {
+        let uploaded = 0;
+        for (const file of selectedFilesQueue) {
+          progressLabel.textContent = `Uploading ${file.name} (${uploaded + 1} of ${selectedFilesQueue.length})...`;
+          await api.uploadFile(file, currentFolderId, (percent) => {
+            const overall = Math.round(((uploaded * 100) + percent) / selectedFilesQueue.length);
+            progressBar.style.width = `${overall}%`;
+          });
+          uploaded++;
+        }
+
+        showToast(`Successfully uploaded ${selectedFilesQueue.length} files!`, 'success');
+        selectedFilesQueue = [];
+        queueContainer.classList.add('d-none');
+
+        const modalEl = document.getElementById('uploadModal');
+        const modal = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+        if (modal) {
+          modal.hide();
+        }
+
+        setTimeout(() => {
+          document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+          document.body.classList.remove('modal-open');
+          document.body.style.removeProperty('padding-right');
+          document.body.style.removeProperty('overflow');
+        }, 200);
+
+        await updateQuotaIndicator();
+        await loadFiles();
+      } catch (err) {
+        showToast(err.message || 'Upload failed', 'error');
+      } finally {
+        progressContainer.classList.add('d-none');
+        progressBar.style.width = '0%';
+        startUploadBtn.disabled = false;
+        multiFileInput.value = '';
+      }
+    });
+
+    document.getElementById('uploadModal').addEventListener('hidden.bs.modal', async () => {
+      await updateQuotaIndicator();
+      await loadFiles();
+    });
+
+    // Search and Filters
+    let searchDebounce;
+    document.getElementById('search-input').addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => { currentPage = 1; loadFiles(); }, 300);
+    });
+    document.getElementById('type-filter').addEventListener('change', () => { currentPage = 1; loadFiles(); });
+    document.getElementById('sort-select').addEventListener('change', () => { currentPage = 1; loadFiles(); });
+
+    initFileManager();
+  </script>
+</body>
+</html>
