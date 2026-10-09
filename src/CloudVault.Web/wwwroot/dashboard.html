@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - CloudVault</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container-fluid max-w-7xl">
+      <a class="brand-logo" href="/dashboard.html">
+        <div class="brand-icon">☁️</div>
+        <span>CloudVault</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+          <li class="nav-item">
+            <a class="nav-link active fw-semibold text-primary" href="/dashboard.html">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/files.html">My Files</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/profile.html">Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/settings.html">Settings</a>
+          </li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-3">
+          <span id="nav-user-name" class="small fw-semibold text-secondary"></span>
+          <a href="/profile.html">
+            <img id="nav-avatar" src="https://ui-avatars.com/api/?name=User&background=4f46e5&color=fff" class="avatar-sm" alt="Avatar">
+          </a>
+          <button id="logout-btn" class="btn btn-outline-danger btn-sm">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-container">
+    <!-- Welcome Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+      <div>
+        <h3 id="welcome-message" class="fw-bold mb-1">Welcome back</h3>
+        <p class="text-muted small mb-0">Here is an overview of your cloud storage and recent activity</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/files.html" class="btn btn-outline-primary btn-sm px-3">📁 Browse Files</a>
+        <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#quickUploadModal">⬆️ Quick Upload</button>
+      </div>
+    </div>
+
+    <!-- Storage Quota Widget & Stats -->
+    <div class="row g-3 mb-4">
+      <!-- Storage Card -->
+      <div class="col-lg-6">
+        <div class="cv-card h-100 mb-0">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0">Storage Usage</h6>
+            <span id="storage-percentage-badge" class="badge bg-primary-subtle text-primary fw-bold">0% Used</span>
+          </div>
+
+          <div class="storage-bar-wrapper">
+            <div id="storage-progress" class="storage-bar-fill" style="width: 0%;"></div>
+          </div>
+
+          <div class="d-flex justify-content-between small text-muted mt-2">
+            <div>Used: <strong id="storage-used" class="text-dark">0 B</strong></div>
+            <div>Available: <strong id="storage-available" class="text-dark">1 GB</strong></div>
+            <div>Limit: <strong id="storage-limit" class="text-dark">1 GB</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="col-lg-3 col-sm-6">
+        <div class="cv-card h-100 mb-0 text-center d-flex flex-column justify-content-center">
+          <div class="text-muted small fw-semibold text-uppercase">Total Files</div>
+          <div id="total-files-count" class="display-6 fw-bold text-dark mt-1">0</div>
+          <div class="small text-muted mt-1"><a href="/files.html" class="text-decoration-none text-primary">View in File Manager &rarr;</a></div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-sm-6">
+        <div class="cv-card h-100 mb-0 text-center d-flex flex-column justify-content-center">
+          <div class="text-muted small fw-semibold text-uppercase">Folders</div>
+          <div id="total-folders-count" class="display-6 fw-bold text-dark mt-1">0</div>
+          <div class="small text-muted mt-1"><a href="/files.html" class="text-decoration-none text-primary">Browse folders &rarr;</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Folders Navigation Section -->
+    <div class="cv-card mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">📁 Folders</h6>
+        <a href="/files.html" class="small text-decoration-none text-primary fw-semibold">View All Folders</a>
+      </div>
+      <div id="folders-container" class="row g-2">
+        <div class="col-12 text-muted small py-2">Loading folders...</div>
+      </div>
+    </div>
+
+    <!-- Recent Files Section -->
+    <div class="cv-card mb-0">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">📄 Recent Files</h6>
+        <a href="/files.html" class="small text-decoration-none text-primary fw-semibold">Go to File Manager &rarr;</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light small">
+            <tr>
+              <th scope="col">File Name</th>
+              <th scope="col">Size</th>
+              <th scope="col">Folder</th>
+              <th scope="col">Uploaded</th>
+              <th scope="col" class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="recent-files-table-body">
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">Loading recent files...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Upload Modal -->
+  <div class="modal fade" id="quickUploadModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Upload to CloudVault</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="modal-dropzone" class="dropzone mb-3">
+            <div class="fs-1 mb-2">☁️</div>
+            <div class="fw-bold">Drag and drop your file here</div>
+            <div class="text-muted small">or click to browse from device</div>
+            <input type="file" id="modal-file-input" class="d-none">
+          </div>
+
+          <div id="upload-status" class="small text-muted text-center d-none">
+            <div class="progress mb-2" style="height: 8px;">
+              <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+            </div>
+            <span id="upload-status-text">Uploading...</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-auto py-3 bg-white border-top text-center text-muted small">
+    <div class="container">
+      &copy; 2026 CloudVault. Enterprise S3 Storage.
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!api.isAuthenticated()) {
+      window.location.href = '/login.html';
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', () => api.logout());
+
+    async function loadDashboard() {
+      try {
+        const user = await api.getMe();
+        document.getElementById('welcome-message').textContent = `Welcome back, ${user.fullName}!`;
+        document.getElementById('nav-user-name').textContent = user.fullName;
+        if (user.profilePictureUrl) {
+          document.getElementById('nav-avatar').src = `${api.getProfilePhotoUrl()}&t=${Date.now()}`;
+        }
+
+        // Storage Usage
+        const usage = await api.getStorageUsage();
+        document.getElementById('storage-used').textContent = usage.formattedUsed;
+        document.getElementById('storage-available').textContent = usage.formattedAvailable;
+        document.getElementById('storage-limit').textContent = usage.formattedLimit;
+        document.getElementById('storage-percentage-badge').textContent = `${usage.usagePercentage}% Used`;
+
+        const progressBar = document.getElementById('storage-progress');
+        progressBar.style.width = `${Math.min(100, usage.usagePercentage)}%`;
+        if (usage.usagePercentage > 90) {
+          progressBar.className = 'storage-bar-fill danger';
+        } else if (usage.usagePercentage > 75) {
+          progressBar.className = 'storage-bar-fill warning';
+        } else {
+          progressBar.className = 'storage-bar-fill';
+        }
+
+        document.getElementById('total-files-count').textContent = usage.totalFiles;
+        document.getElementById('total-folders-count').textContent = usage.totalFolders;
+
+        // Load Folders
+        const folders = await api.getFolders();
+        const foldersContainer = document.getElementById('folders-container');
+        if (folders.length === 0) {
+          foldersContainer.innerHTML = '<div class="col-12 text-muted small py-2">No folders created yet.</div>';
+        } else {
+          foldersContainer.innerHTML = folders.slice(0, 6).map(f => `
+            <div class="col-md-4 col-sm-6">
+              <div class="folder-item-card" onclick="window.location.href='/files.html?folderId=${f.id}'">
+                <span class="fs-4">📁</span>
+                <div class="text-truncate">
+                  <div class="fw-semibold small text-truncate">${f.name}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">${f.fileCount} files</div>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        // Load Recent Files (across all folders)
+        const filesResult = await api.getFiles({ pageSize: 5, sortBy: 'CreatedAt', sortDescending: true, includeSubfolders: true });
+        const tbody = document.getElementById('recent-files-table-body');
+        if (filesResult.items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No files uploaded yet. Click Quick Upload to start!</td></tr>';
+        } else {
+          tbody.innerHTML = filesResult.items.map(f => {
+            const safeName = (f.fileName || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            return `
+            <tr>
+              <td>
+                <span class="me-2" style="cursor: pointer;" onclick="openFile('${f.id}')">${getFileIcon(f.fileName)}</span>
+                <span class="fw-semibold text-primary" style="cursor: pointer;" onclick="openFile('${f.id}')" title="Click to view file">${f.fileName}</span>
+              </td>
+              <td class="text-muted small">${f.formattedSize}</td>
+              <td class="text-muted small">${f.folderName || 'Root'}</td>
+              <td class="text-muted small">${formatDate(f.createdAt)}</td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick="openFile('${f.id}')" title="Preview / Open in new tab">👁️ View</button>
+                <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="downloadFile('${f.id}', '${safeName}')" title="Download to device">⬇️ Download</button>
+              </td>
+            </tr>
+          `;
+          }).join('');
+        }
+      } catch (err) {
+        showToast(err.message || 'Failed to load dashboard', 'error');
+      }
+    }
+
+    function openFile(id) {
+      try {
+        api.openFile(id);
+      } catch (err) {
+        showToast(err.message || 'Cannot open file', 'error');
+      }
+    }
+
+    async function downloadFile(id, fileName) {
+      try {
+        showToast('Preparing download...', 'info');
+        await api.downloadFile(id, fileName);
+        showToast('Download started!', 'success');
+      } catch (err) {
+        showToast(err.message || 'Download failed', 'error');
+      }
+    }
+
+    // Modal Upload Handling
+    const dropzone = document.getElementById('modal-dropzone');
+    const fileInput = document.getElementById('modal-file-input');
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        handleUpload(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        handleUpload(fileInput.files[0]);
+      }
+    });
+
+    async function handleUpload(file) {
+      const statusDiv = document.getElementById('upload-status');
+      const progressBar = document.getElementById('upload-progress-bar');
+      const statusText = document.getElementById('upload-status-text');
+
+      statusDiv.classList.remove('d-none');
+      statusText.textContent = `Uploading ${file.name}...`;
+
+      try {
+        await api.uploadFile(file, null, (percent) => {
+          progressBar.style.width = `${percent}%`;
+          statusText.textContent = `Uploading ${file.name} (${percent}%)...`;
+        });
+
+        showToast(`Uploaded ${file.name} successfully!`, 'success');
+
+        // Hide modal safely
+        const modalEl = document.getElementById('quickUploadModal');
+        const modal = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+        if (modal) {
+          modal.hide();
+        }
+
+        // Clean up backdrop
+        setTimeout(() => {
+          document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+          document.body.classList.remove('modal-open');
+          document.body.style.removeProperty('padding-right');
+          document.body.style.removeProperty('overflow');
+        }, 200);
+
+        // Immediate reload of recent files and storage metrics
+        await loadDashboard();
+      } catch (err) {
+        showToast(err.message || 'Upload failed', 'error');
+      } finally {
+        statusDiv.classList.add('d-none');
+        progressBar.style.width = '0%';
+        fileInput.value = '';
+      }
+    }
+
+    document.getElementById('quickUploadModal').addEventListener('hidden.bs.modal', async () => {
+      await loadDashboard();
+    });
+
+    loadDashboard();
+  </script>
+</body>
+</html>
