@@ -1,0 +1,48 @@
+{
+  "family": "cloudvault-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/cloudvault-app-task-role",
+  "containerDefinitions": [
+    {
+      "name": "cloudvault-api",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/cloudvault:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "ASPNETCORE_ENVIRONMENT", "value": "Production" },
+        { "name": "Storage__Provider", "value": "S3" },
+        { "name": "Storage__S3BucketName", "value": "cloudvault-prod-storage" },
+        { "name": "AWS__Region", "value": "us-east-1" },
+        { "name": "AWS__UseIamRole", "value": "true" }
+      ],
+      "secrets": [
+        {
+          "name": "ConnectionStrings__DefaultConnection",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cloudvault/db_connection_string"
+        },
+        {
+          "name": "Jwt__Secret",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cloudvault/jwt_secret"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/aws/cloudvault/api",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
